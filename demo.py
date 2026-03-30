@@ -1,4 +1,7 @@
 import langextract as lx
+from langextract import prompting
+from langextract.core import data
+from langextract.core import format_handler as fh
 
 model_id = "phi3.5"  # or "gemma2:2b"
 model_url = "http://localhost:11434"
@@ -49,6 +52,27 @@ examples = [
     )
 ]
 
+def print_prompt(text: str):
+    prompt_template = prompting.PromptTemplateStructured(description=prompt)
+    prompt_template.examples.extend(examples)
+
+    format_handler = fh.FormatHandler(
+        format_type=data.FormatType.JSON,
+        use_wrapper=True,
+        wrapper_key=data.EXTRACTIONS_KEY,
+        use_fences=False,
+        attribute_suffix=data.ATTRIBUTE_SUFFIX,
+    )
+
+    generator = prompting.QAPromptGenerator(
+        template=prompt_template,
+        format_handler=format_handler,
+    )
+
+    print("\nPrompt:")
+    print(generator.render(question=text))
+
+
 def extract_text(text: str):
     result = lx.extract(
         text_or_documents=text,
@@ -59,6 +83,7 @@ def extract_text(text: str):
         show_progress=True
     )
 
+    print_prompt(text)
     print("\nExtractions:")
     for ext in result.extractions:
         print(f"  {ext.extraction_class}: {ext.extraction_text}")
