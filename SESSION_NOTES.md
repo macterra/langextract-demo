@@ -1,39 +1,77 @@
 ## Session Notes
 
-### Demo Runtime
+### Current Setup
 
-- Run the demo with the repo virtualenv interpreter: `./.venv/bin/python demo.py`
-- `python` was not available on PATH in this environment, but `python3` was.
-- `langextract` is installed in the repo virtualenv at `.venv`.
+- The demo now uses OpenAI via `OPENAI_API_KEY` loaded from `.env`.
+- Current model in `demo.py`: `gpt-4.1-mini`
+- The project is managed with `uv`.
+- Primary run command: `uv run python demo.py`
 
-### Ollama Setup
+### Project Files
 
-- `demo.py` is configured to use:
-  - model: `phi3.5`
-  - URL: `http://localhost:11434`
-- `ollama` is installed at `/home/david/.local/bin/ollama`
-- The local model `phi3.5:latest` was present.
-- The Ollama server was not running by default and had to be started with `ollama serve`.
-- Ollama was stopped again after testing.
+- `demo.py`: LangExtract demo with:
+  - few-shot positive examples
+  - few-shot negative examples
+  - positive test texts
+  - negative test texts
+  - Pydantic post-processing into normalized boring records
+- `pyproject.toml`: minimal `uv` project config
+- `uv.lock`: locked dependency graph
+- `.gitignore`: ignores `.env`, `.venv`, and `__pycache__`
 
-### Last Observed Failure
+### Demo Behavior
 
-- The demo started successfully once Ollama was running, but extraction failed after inference.
-- Observed error:
+- `langextract` is being used as a thin orchestration layer around the LLM:
+  - builds the prompt from `prompt` + `examples`
+  - sends it to the model
+  - parses output into flat `Extraction` objects
+- `demo.py` then groups those flat extractions into record-like objects with Pydantic.
 
-```text
-ERROR:absl:Extraction text must be a string, integer, or float. Found: <class 'dict'>
-ValueError: Extraction text must be a string, integer, or float.
-```
+### Pydantic Normalization
 
-- This suggests the model response shape from `phi3.5` did not match what `langextract` expected for the current prompt/example setup in `demo.py`.
+- `BoringRecord` normalizes extracted values after `langextract` returns them.
+- `number_of_borings` is converted from values like `one`, `two`, `eight` into integers.
+- `min_depth` and `max_depth` are normalized to floats.
 
-### Notes About `demo.py`
+### Prompt / Example Notes
 
-- The currently active input text in `demo.py` is:
+- The examples were cleaned up to align more literally with their source text.
+- Remaining prompt-alignment warnings are mostly due to LangExtract’s strict span matching on short values like:
+  - `Two`
+  - `8`
+  - `50`
+  - `100`
+- Negative examples with `extractions=[]` caused LangExtract prompt validation to fail, so:
+  - `prompt_validation_level` is set to `OFF` in the demo
 
-```text
-Laboratory testing of soils collected at the boring locations revealed the near-surface soil possesses "low" expansion potential when testing in accordance with the ASTM International D4829 test method (Figures A1 and A2).
-```
+### Model Findings
 
-- There is also a commented-out alternate text block about test borings and CPT soundings that may be a better fit for the current extraction prompt/examples.
+- `phi3.5` via Ollama was highly non-deterministic and often produced malformed structured output.
+- Restarting Ollama sometimes changed behavior, confirming instability.
+- `gpt-4.1-mini` behaved much more reliably for this extraction task.
+
+### Negative Coverage
+
+- The prompt now includes negative examples that should produce no extraction output.
+- The demo also runs separate negative test texts that are different from the negative prompt examples.
+- Current negative test behavior is good: no extractions, no normalized records.
+
+### Git / Repo
+
+- Local git history includes incremental commits for:
+  - extraction refactor
+  - multiple sample texts
+  - prompt printing
+  - OpenAI model switch
+  - example cleanup
+  - `uv` project setup
+  - Pydantic normalization
+  - negative examples and test texts
+- Repo was pushed to:
+  - `https://github.com/macterra/langextract-demo`
+
+### Useful Commands
+
+- Run demo: `uv run python demo.py`
+- Sync environment: `uv sync`
+- Show remotes: `git remote -v`
