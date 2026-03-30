@@ -21,8 +21,8 @@ examples = [
     lx.data.ExampleData(
         text="Two Cone Penetration Test soundings to depths of 50 feet bgs",
         extractions=[
-            lx.data.Extraction(extraction_class="boring_type", extraction_text="Cone Penetration Test"),
-            lx.data.Extraction(extraction_class="number_of_borings", extraction_text="2"),
+            lx.data.Extraction(extraction_class="boring_type", extraction_text="Cone Penetration Test soundings"),
+            lx.data.Extraction(extraction_class="number_of_borings", extraction_text="Two"),
             lx.data.Extraction(extraction_class="min_depth", extraction_text="50"),
             lx.data.Extraction(extraction_class="max_depth", extraction_text="50"),
             lx.data.Extraction(extraction_class="unit", extraction_text="feet")
@@ -31,7 +31,7 @@ examples = [
     lx.data.ExampleData(
         text="8 test borings to depths ranging from 100 to 200 feet below ground surface",
         extractions=[
-            lx.data.Extraction(extraction_class="boring_type", extraction_text="test boring"),
+            lx.data.Extraction(extraction_class="boring_type", extraction_text="test borings"),
             lx.data.Extraction(extraction_class="number_of_borings", extraction_text="8"),
             lx.data.Extraction(extraction_class="min_depth", extraction_text="100"),
             lx.data.Extraction(extraction_class="max_depth", extraction_text="200"),
@@ -42,7 +42,7 @@ examples = [
         text="Two Cone Penetration Test soundings to depths of 50 feet bgs and three test borings to 100 feet",
         extractions=[
             # CPT group
-            lx.data.Extraction(extraction_class="boring_type", extraction_text="Cone Penetration Test"),
+            lx.data.Extraction(extraction_class="boring_type", extraction_text="Cone Penetration Test soundings"),
             lx.data.Extraction(extraction_class="number_of_borings", extraction_text="Two"),
             lx.data.Extraction(extraction_class="min_depth", extraction_text="50"),
             lx.data.Extraction(extraction_class="max_depth", extraction_text="50"),
@@ -88,7 +88,7 @@ def extract_text(text: str):
         show_progress=True
     )
 
-    print_prompt(text)
+    #print_prompt(text)
     print("\nExtractions:")
     for ext in result.extractions:
         print(f"  {ext.extraction_class}: {ext.extraction_text}")
