@@ -2,6 +2,7 @@ import os
 
 import langextract as lx
 from langextract import prompting
+from langextract import prompt_validation as pv
 from langextract.core import data
 from langextract.core import format_handler as fh
 from dotenv import load_dotenv
@@ -55,6 +56,14 @@ examples = [
             lx.data.Extraction(extraction_class="max_depth", extraction_text="100"),
             lx.data.Extraction(extraction_class="unit", extraction_text="feet"),
         ]
+    ),
+    lx.data.ExampleData(
+        text="Laboratory testing of soils collected at the boring locations revealed low expansion potential.",
+        extractions=[]
+    ),
+    lx.data.ExampleData(
+        text="Groundwater was not encountered during the site reconnaissance visit.",
+        extractions=[]
     )
 ]
 
@@ -149,7 +158,8 @@ def extract_text(text: str):
         examples=examples,
         model_id=model_id,
         api_key=api_key,
-        show_progress=True
+        show_progress=True,
+        prompt_validation_level=pv.PromptValidationLevel.OFF,
     )
 
     #print_prompt(text)
@@ -162,12 +172,16 @@ def extract_text(text: str):
         print(f"  {record.model_dump()}")
 
 
-text = """Terracon’s geotechnical scope of work included the advancement of eight test borings to approximate depths of 211.5 to 611.5 feet below the ground surface (bgs) and two Cone Penetration Test soundings to approximate depths of 50 feet bgs."""
+text_1 = """Terracon’s geotechnical scope of work included the advancement of eight test borings to approximate depths of 211.5 to 611.5 feet below the ground surface (bgs) and two Cone Penetration Test soundings to approximate depths of 50 feet bgs."""
 text_2 = """Two Cone Penetration Test soundings to depths of 50 feet bgs."""
 text_3 = """Three test borings were advanced to approximate depths of 120 feet below ground surface."""
 text_4 = """The field investigation included six test borings ranging from 35 to 80 feet bgs and one Cone Penetration Test sounding to 45 feet bgs."""
+text_5 = """Moisture content and Atterberg limits testing were performed on representative soil samples from the site."""
+text_6 = """Site access was limited by weather conditions, and drilling activities were postponed until the following week."""
 
-extract_text(text)
+extract_text(text_1)
 extract_text(text_2)
 extract_text(text_3)
 extract_text(text_4)
+extract_text(text_5)
+extract_text(text_6)
