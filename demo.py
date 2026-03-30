@@ -5,6 +5,7 @@ from langextract import prompting
 from langextract.core import data
 from langextract.core import format_handler as fh
 from dotenv import load_dotenv
+from pydantic import BaseModel, field_validator
 
 load_dotenv()
 
@@ -57,6 +58,69 @@ examples = [
     )
 ]
 
+
+NUMBER_WORDS = {
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+}
+
+
+class BoringRecord(BaseModel):
+    boring_type: str
+    number_of_borings: int
+    min_depth: float
+    max_depth: float
+    unit: str
+
+    @field_validator("number_of_borings", mode="before")
+    @classmethod
+    def normalize_boring_count(cls, value):
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized.isdigit():
+                return int(normalized)
+            if normalized in NUMBER_WORDS:
+                return NUMBER_WORDS[normalized]
+        raise ValueError(f"Unsupported boring count: {value}")
+
+
+def build_boring_records(extractions: list[lx.data.Extraction]) -> list[BoringRecord]:
+    records = []
+    current_record = {}
+
+    for ext in extractions:
+        if ext.extraction_class == "boring_type" and current_record:
+            records.append(BoringRecord.model_validate(current_record))
+            current_record = {}
+
+        current_record[ext.extraction_class] = ext.extraction_text
+
+        if {
+            "boring_type",
+            "number_of_borings",
+            "min_depth",
+            "max_depth",
+            "unit",
+        }.issubset(current_record):
+            records.append(BoringRecord.model_validate(current_record))
+            current_record = {}
+
+    if current_record:
+        records.append(BoringRecord.model_validate(current_record))
+
+    return records
+
 def print_prompt(text: str):
     prompt_template = prompting.PromptTemplateStructured(description=prompt)
     prompt_template.examples.extend(examples)
@@ -92,6 +156,10 @@ def extract_text(text: str):
     print("\nExtractions:")
     for ext in result.extractions:
         print(f"  {ext.extraction_class}: {ext.extraction_text}")
+
+    print("\nNormalized records:")
+    for record in build_boring_records(result.extractions):
+        print(f"  {record.model_dump()}")
 
 
 text = """Terracon’s geotechnical scope of work included the advancement of eight test borings to approximate depths of 211.5 to 611.5 feet below the ground surface (bgs) and two Cone Penetration Test soundings to approximate depths of 50 feet bgs."""
