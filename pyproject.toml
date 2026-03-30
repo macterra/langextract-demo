@@ -1,0 +1,14 @@
+[project]
+name = "langextract-demo"
+version = "0.1.0"
+description = "Small LangExtract demo for boring depth extraction"
+readme = "SESSION_NOTES.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langextract==1.2.0",
+    "openai==2.30.0",
+    "python-dotenv==1.2.2",
+]
+
+[tool.uv]
+package = false
