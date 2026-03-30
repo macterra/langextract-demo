@@ -49,33 +49,22 @@ examples = [
     )
 ]
 
+def extract_text(text: str):
+    result = lx.extract(
+        text_or_documents=text,
+        prompt_description=prompt,
+        examples=examples,
+        model_id=model_id,
+        model_url=model_url,
+        show_progress=True
+    )
+
+    print("\nExtractions:")
+    for ext in result.extractions:
+        print(f"  {ext.extraction_class}: {ext.extraction_text}")
+
+
 text = """Terracon’s geotechnical scope of work included the advancement of eight test borings to approximate depths of 211.5 to 611.5 feet below the ground surface (bgs) and two Cone Penetration Test soundings to approximate depths of 50 feet bgs."""
 
-result = lx.extract(
-    text_or_documents=text,
-    prompt_description=prompt,
-    examples=examples,
-    model_id=model_id,
-    model_url=model_url,
-    show_progress=True
-)
+extract_text(text)
 
-print("\nExtractions:")
-for ext in result.extractions:
-    print(f"  {ext.extraction_class}: {ext.extraction_text}")
-
-# text = """Laboratory testing of soils collected at the boring locations revealed the near-surface soil possesses “low” expansion potential when testing in accordance with the ASTM International D4829 test method (Figures A1 and A2)."""
-
-# result = lx.extract(
-#     text_or_documents=text,
-#     prompt_description=prompt,
-#     examples=examples,
-#     model_id=model_id,
-#     model_url=model_url,
-#     show_progress=True,
-#     resolver_params={"suppress_parse_errors": True},
-# )
-
-# print("\nExtractions:")
-# for ext in result.extractions:
-#     print(f"  {ext.extraction_class}: {ext.extraction_text}")
