@@ -1,10 +1,15 @@
+import os
+
 import langextract as lx
 from langextract import prompting
 from langextract.core import data
 from langextract.core import format_handler as fh
+from dotenv import load_dotenv
 
-model_id = "phi3.5"  # or "gemma2:2b"
-model_url = "http://localhost:11434"
+load_dotenv()
+
+model_id = "gpt-4.1-mini"
+api_key = os.getenv("OPENAI_API_KEY")
 
 # prompt = """Extract ONLY Cone Penetration Test (CPT) sounding depth measurements.
 # Include boring type, minimum depth, maximum depth, and unit."""
@@ -79,7 +84,7 @@ def extract_text(text: str):
         prompt_description=prompt,
         examples=examples,
         model_id=model_id,
-        model_url=model_url,
+        api_key=api_key,
         show_progress=True
     )
 
