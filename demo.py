@@ -65,6 +65,11 @@ def extract_text(text: str):
 
 
 text = """Terracon’s geotechnical scope of work included the advancement of eight test borings to approximate depths of 211.5 to 611.5 feet below the ground surface (bgs) and two Cone Penetration Test soundings to approximate depths of 50 feet bgs."""
+text_2 = """Two Cone Penetration Test soundings to depths of 50 feet bgs."""
+text_3 = """Three test borings were advanced to approximate depths of 120 feet below ground surface."""
+text_4 = """The field investigation included six test borings ranging from 35 to 80 feet bgs and one Cone Penetration Test sounding to 45 feet bgs."""
 
 extract_text(text)
-
+extract_text(text_2)
+extract_text(text_3)
+extract_text(text_4)
