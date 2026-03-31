@@ -61,7 +61,9 @@ def main() -> int:
         print(f"CSV file not found: {csv_path}", file=sys.stderr)
         return 1
 
+    scanned = 0
     written = 0
+    rejected = 0
 
     with csv_path.open(newline="", encoding="utf-8") as infile:
         reader = csv.DictReader(infile)
@@ -69,7 +71,10 @@ def main() -> int:
         writer.writeheader()
 
         for row in reader:
+            scanned += 1
+
             if not is_survivor(row):
+                rejected += 1
                 continue
 
             writer.writerow(row)
@@ -77,6 +82,15 @@ def main() -> int:
 
             if args.limit is not None and written >= args.limit:
                 break
+
+    limit_hit = args.limit is not None and written >= args.limit
+    print(
+        (
+            f"prefilter stats: scanned={scanned}, survivors={written}, "
+            f"rejected={rejected}, limit_hit={str(limit_hit).lower()}"
+        ),
+        file=sys.stderr,
+    )
 
     return 0
 
