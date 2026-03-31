@@ -68,11 +68,7 @@ def main() -> int:
 
         for row in reader:
             scanned += 1
-            if not is_survivor(
-                row,
-                patterns=BORING_TYPE_PATTERNS,
-                pattern_regex=pattern_regex,
-            ):
+            if not is_survivor(row, pattern_regex=pattern_regex):
                 continue
 
             text = row.get("resolved_text", "")

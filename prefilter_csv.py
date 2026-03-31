@@ -20,12 +20,9 @@ def compile_pattern_regex(
 def is_survivor(
     row: dict[str, str],
     *,
-    patterns: tuple[str, ...],
-    pattern_regex: re.Pattern[str] | None = None,
+    pattern_regex: re.Pattern[str],
 ) -> bool:
     text = build_text(row)
-    if pattern_regex is None:
-        pattern_regex = compile_pattern_regex(patterns)
     return bool(pattern_regex.search(text))
 
 
@@ -79,7 +76,7 @@ def main() -> int:
         for row in reader:
             scanned += 1
 
-            if not is_survivor(row, patterns=patterns, pattern_regex=pattern_regex):
+            if not is_survivor(row, pattern_regex=pattern_regex):
                 rejected += 1
                 continue
 
