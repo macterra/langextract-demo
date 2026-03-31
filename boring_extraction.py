@@ -1,21 +1,9 @@
 import os
-import sys
+import re
 
-try:
-    from dotenv import load_dotenv
-    import langextract as lx
-    from langextract import prompt_validation as pv
-except ModuleNotFoundError as exc:
-    if exc.name in {"langextract", "dotenv"}:
-        print(
-            f"Missing dependency: {exc.name} is not installed in this Python interpreter.\n"
-            "Run this project with `uv run python ...`, for example:\n"
-            "  uv run python extract_from_csv.py --limit 10",
-            file=sys.stderr,
-        )
-        raise SystemExit(1) from exc
-    raise
-
+import langextract as lx
+from dotenv import load_dotenv
+from langextract import prompt_validation as pv
 from pydantic import BaseModel, field_validator, model_validator
 
 load_dotenv()
@@ -148,6 +136,12 @@ TENS_WORDS = {
 
 def parse_number_word(value: str) -> int | None:
     normalized = value.strip().lower().replace("-", " ")
+    normalized = re.sub(r"\(\s*(\d+)\s*\)", r"\1", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    digit_matches = re.findall(r"\d+", normalized)
+
+    if len(digit_matches) == 1:
+        return int(digit_matches[0])
 
     if normalized.isdigit():
         return int(normalized)
@@ -216,6 +210,15 @@ def group_boring_extractions(extractions: list[lx.data.Extraction]) -> list[dict
         if ext.extraction_class == "boring_type" and current_record:
             groups.append(current_record)
             current_record = {}
+        elif ext.extraction_class in current_record:
+            previous_boring_type = current_record.get("boring_type")
+            groups.append(current_record)
+            current_record = {}
+
+            # If the model starts a new group without repeating boring_type,
+            # carry the prior type forward so we don't lose the earlier record.
+            if previous_boring_type is not None:
+                current_record["boring_type"] = previous_boring_type
 
         current_record[ext.extraction_class] = ext.extraction_text
 
