@@ -4,9 +4,8 @@ import json
 import sys
 from pathlib import Path
 
-from boring_extraction import BORING_TYPE_PATTERNS
 from boring_extraction import extract_context_keys
-from prefilter_csv import compile_pattern_regex
+from boring_extraction import filter_context_keys
 from prefilter_csv import is_survivor
 
 
@@ -53,7 +52,7 @@ def main() -> int:
 
     scanned = 0
     survivors = 0
-    pattern_regex = compile_pattern_regex(BORING_TYPE_PATTERNS)
+    pattern_regex = filter_context_keys()
 
     with csv_path.open(newline="", encoding="utf-8") as infile:
         reader = csv.DictReader(infile)

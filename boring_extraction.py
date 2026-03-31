@@ -28,6 +28,11 @@ BORING_TYPE_PATTERNS = (
     r"\bborings?\b",
 )
 
+
+def filter_context_keys() -> re.Pattern[str]:
+    return re.compile("|".join(BORING_TYPE_PATTERNS), re.IGNORECASE)
+
+
 EXAMPLES = [
     lx.data.ExampleData(
         text="Two Cone Penetration Test soundings to depths of 50 feet bgs",
