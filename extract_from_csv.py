@@ -5,8 +5,7 @@ import sys
 from pathlib import Path
 
 from boring_extraction import BORING_TYPE_PATTERNS
-from boring_extraction import extract_boring_data
-from boring_extraction import normalize_boring_records
+from boring_extraction import extract_context_keys
 from prefilter_csv import compile_pattern_regex
 from prefilter_csv import is_survivor
 
@@ -30,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_output_row(row: dict[str, str], raw_extractions, normalized_records) -> dict:
+def build_output_row(row: dict[str, str], normalized_records) -> dict:
     return {
         "report_id": row.get("report_id"),
         "system_label_name": row.get("system_label_name"),
@@ -38,13 +37,6 @@ def build_output_row(row: dict[str, str], raw_extractions, normalized_records) -
         "title": row.get("title"),
         "filename": row.get("filename"),
         "resolved_text": row.get("resolved_text"),
-        "raw_extractions": [
-            {
-                "extraction_class": ext.extraction_class,
-                "extraction_text": ext.extraction_text,
-            }
-            for ext in raw_extractions
-        ],
         "normalized_records": [
             record.model_dump(exclude_none=True) for record in normalized_records
         ],
@@ -75,11 +67,10 @@ def main() -> int:
             if not text.strip():
                 continue
 
-            result = extract_boring_data(text, show_progress=False)
-            normalized_records = normalize_boring_records(result.extractions)
+            normalized_records = extract_context_keys(text, show_progress=False)
             print(
                 json.dumps(
-                    build_output_row(row, result.extractions, normalized_records),
+                    build_output_row(row, normalized_records),
                     ensure_ascii=True,
                 )
             )

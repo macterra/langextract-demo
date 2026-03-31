@@ -188,6 +188,22 @@ def parse_number_word(value: str) -> int | None:
     return None
 
 
+def parse_numeric_value(value: str) -> float | None:
+    normalized = value.strip().lower().replace("-", " ")
+    normalized = re.sub(r"\(\s*(\d+(?:\.\d+)?)\s*\)", r"\1", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+
+    decimal_matches = re.findall(r"\d+(?:\.\d+)?", normalized)
+    if len(decimal_matches) == 1:
+        return float(decimal_matches[0])
+
+    parsed_word_number = parse_number_word(normalized)
+    if parsed_word_number is not None:
+        return float(parsed_word_number)
+
+    return None
+
+
 class BoringRecord(BaseModel):
     boring_type: str | None = None
     number_of_borings: int | None = None
@@ -198,13 +214,30 @@ class BoringRecord(BaseModel):
     @field_validator("number_of_borings", mode="before")
     @classmethod
     def normalize_boring_count(cls, value):
+        if value is None:
+            return None
         if isinstance(value, int):
             return value
         if isinstance(value, str):
             parsed_value = parse_number_word(value)
             if parsed_value is not None:
                 return parsed_value
-        raise ValueError(f"Unsupported boring count: {value}")
+            return None
+        return None
+
+    @field_validator("min_depth", "max_depth", mode="before")
+    @classmethod
+    def normalize_depth_value(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            parsed_value = parse_numeric_value(value)
+            if parsed_value is not None:
+                return parsed_value
+            return None
+        return None
 
     @model_validator(mode="after")
     def normalize_depth_range(self):
@@ -221,6 +254,9 @@ def group_boring_extractions(extractions: list[lx.data.Extraction]) -> list[dict
 
     for ext in extractions:
         if ext.extraction_class == "boring_type" and current_record:
+            if "boring_type" not in current_record:
+                current_record[ext.extraction_class] = ext.extraction_text
+                continue
             groups.append(current_record)
             current_record = {}
         elif ext.extraction_class in current_record:
@@ -266,3 +302,19 @@ def extract_boring_data(
 def normalize_boring_records(extractions: list[lx.data.Extraction]) -> list[BoringRecord]:
     groups = group_boring_extractions(extractions)
     return build_boring_records(groups)
+
+
+def extract_context_keys(
+    text: str,
+    *,
+    model_id: str = MODEL_ID,
+    api_key: str | None = API_KEY,
+    show_progress: bool = False,
+) -> list[BoringRecord]:
+    result = extract_boring_data(
+        text,
+        model_id=model_id,
+        api_key=api_key,
+        show_progress=show_progress,
+    )
+    return normalize_boring_records(result.extractions)
