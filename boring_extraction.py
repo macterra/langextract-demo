@@ -15,6 +15,19 @@ PROMPT = """extract boring depth and measurements.
 Include boring type, number of borings, minimum depth, maximum depth, and unit.
 If only some fields are present, return the partial extraction with the fields that are available."""
 
+BORING_TYPE_PATTERNS = (
+    r"\btest borings?\b",
+    r"\bsoil borings?\b",
+    r"\brock borings?\b",
+    r"\bmonitoring well borings?\b",
+    r"\bcone penetration tests?\b",
+    r"\bcone penetration test soundings?\b",
+    r"\bcpt soundings?\b",
+    r"\bcpts?\b",
+    r"\bsoundings?\b",
+    r"\bborings?\b",
+)
+
 EXAMPLES = [
     lx.data.ExampleData(
         text="Two Cone Penetration Test soundings to depths of 50 feet bgs",

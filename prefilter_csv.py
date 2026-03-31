@@ -4,39 +4,34 @@ import re
 import sys
 from pathlib import Path
 
-
 TEXT_COLUMNS = ("title", "ancestry_titles", "resolved_text")
-
-# Keep this fairly strict: only pass rows with a strong chance of yielding
-# a boring_type extraction, not just generic geotech activity words.
-BORING_TYPE_PATTERNS = (
-    r"\btest borings?\b",
-    r"\bsoil borings?\b",
-    r"\brock borings?\b",
-    r"\bmonitoring well borings?\b",
-    r"\bcone penetration tests?\b",
-    r"\bcone penetration test soundings?\b",
-    r"\bcpt soundings?\b",
-    r"\bcpts?\b",
-    r"\bsoundings?\b",
-    r"\bborings?\b",
-)
-
-BORING_TYPE_REGEX = re.compile("|".join(BORING_TYPE_PATTERNS), re.IGNORECASE)
 
 
 def build_text(row: dict[str, str]) -> str:
     return " ".join((row.get(column, "") or "") for column in TEXT_COLUMNS)
 
 
-def is_survivor(row: dict[str, str]) -> bool:
+def compile_pattern_regex(
+    patterns: tuple[str, ...],
+) -> re.Pattern[str]:
+    return re.compile("|".join(patterns), re.IGNORECASE)
+
+
+def is_survivor(
+    row: dict[str, str],
+    *,
+    patterns: tuple[str, ...],
+    pattern_regex: re.Pattern[str] | None = None,
+) -> bool:
     text = build_text(row)
-    return bool(BORING_TYPE_REGEX.search(text))
+    if pattern_regex is None:
+        pattern_regex = compile_pattern_regex(patterns)
+    return bool(pattern_regex.search(text))
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Print only CSV rows with a strong chance of containing a boring_type extraction."
+        description="Print only CSV rows that match the configured filter patterns."
     )
     parser.add_argument(
         "csv_path",
@@ -50,20 +45,31 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Maximum number of survivor rows to print.",
     )
+    parser.add_argument(
+        "--pattern",
+        action="append",
+        default=[],
+        help="Regex pattern to match against the combined row text. Repeat to provide multiple patterns.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     csv_path = Path(args.csv_path)
+    patterns = tuple(args.pattern)
 
     if not csv_path.exists():
         print(f"CSV file not found: {csv_path}", file=sys.stderr)
+        return 1
+    if not patterns:
+        print("At least one --pattern is required.", file=sys.stderr)
         return 1
 
     scanned = 0
     written = 0
     rejected = 0
+    pattern_regex = compile_pattern_regex(patterns)
 
     with csv_path.open(newline="", encoding="utf-8") as infile:
         reader = csv.DictReader(infile)
@@ -73,7 +79,7 @@ def main() -> int:
         for row in reader:
             scanned += 1
 
-            if not is_survivor(row):
+            if not is_survivor(row, patterns=patterns, pattern_regex=pattern_regex):
                 rejected += 1
                 continue
 
